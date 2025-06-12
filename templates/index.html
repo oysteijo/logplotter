@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live Data Plot (WebSockets)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        <-- #myChart { max-width: 800px; margin: 20px auto; } -->
+    </style>
+</head>
+<body>
+    <h1>Live Data Plot (WebSockets)</h1>
+    <div id="myChartContainer">
+        <canvas id="myChart"></canvas>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('myChart').getContext('2d');
+        let myChart;
+        let dataPoints = []; // Stores all data points received
+        let labelCounter = 0; // Simple counter for labels
+
+        // Connect to the Socket.IO server
+        // If running locally, this should be your Flask app's address
+        const socket = io('http://127.0.0.1:5000');
+
+        socket.on('connect', () => {
+            console.log('Connected to WebSocket server');
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from WebSocket server');
+        });
+
+        // Event for initial data (when a new client connects)
+        socket.on('initial_data', (msg) => {
+            console.log('Received initial data:', msg.data);
+            dataPoints = msg.data;
+            labelCounter = dataPoints.length; // Set label counter based on initial data
+            updateChart();
+        });
+
+        // Event for new data updates
+        socket.on('new_data', (msg) => {
+            // const recievedTime = new Date().getTime();
+            // console.log('[${recievedTime}] Received new data:', msg.data);
+            console.log('Received new data:', msg.data);
+            // Append new data to our existing dataPoints array
+			try {
+				msg.data.forEach(dp => {
+					dataPoints.push(dp);
+					labelCounter++; // Increment label counter for each new point
+					});
+				updateChart();
+			} catch(error) {
+				console.error('Error: ', error);
+			}
+        });
+
+        function updateChart() {
+            const labels = Array.from({length: dataPoints.length}, (_, i) => i + 1); // Or use timestamps if available
+
+            if (!myChart) {
+                // Initialize chart if it doesn't exist
+                myChart = new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'My Data',
+                            data: dataPoints,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        animation: false, // Turn off animation for smoother live updates
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            } else {
+                // Update existing chart
+                myChart.data.labels = labels;
+                myChart.data.datasets[0].data = dataPoints;
+                myChart.update(); // This efficiently updates the chart
+            }
+        }
+    </script>
+</body>
+</html>
