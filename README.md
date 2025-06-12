@@ -10,8 +10,8 @@ ie. the loss function value metric or whatever you are measuring.
 This system sets up a inotify signal on the logfile you want to plot. It uses the watchdog
 package to watch over changes in a file. This can be slow if it is a remote system.
 
-It then sets up a Flask application server and sets up a WebServer connection between the
-server and the client. 
+It then sets up a Flask application server and sets up a WebSocket connection between the
+server and the client. The client makes a plot using chart.js.
 
 ## Install
 
