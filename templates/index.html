@@ -1,96 +1,171 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Live Data Plot (WebSockets)</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+    <title>Live Data Stream (Plotly.js - Count Axis)</title>
     <style>
-        body { font-family: Arial, sans-serif; }
-        <-- #myChart { max-width: 800px; margin: 20px auto; } -->
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        h1 {
+            color: #0056b3;
+            text-align: center;
+        }
+        #plotlyChart {
+            width: 90%;
+            max-width: 1000px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            height: 500px; /* Plotly requires a height for the div */
+        }
+        #dataPoints {
+            margin-top: 20px;
+            font-size: 1em;
+            text-align: center;
+            color: #555;
+        }
+        #resetZoomBtn {
+            display: block;
+            margin: 10px auto 20px auto;
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        #resetZoomBtn:hover {
+            background-color: #0056b3;
+        }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
 </head>
 <body>
-    <h1>Live Data Plot (WebSockets)</h1>
-    <div id="myChartContainer">
-        <canvas id="myChart"></canvas>
+    <h1>Live Data Plot (Plotly.js - Count Axis)</h1>
+    <div id="plotlyChart"></div>
+    <button id="resetZoomBtn">Reset View</button>
+    <div id="dataPoints">
+        <p>Last Data Point (Index:Value): <span id="lastDataPoint">N/A</span></p>
     </div>
 
     <script>
-        const ctx = document.getElementById('myChart').getContext('2d');
-        let myChart;
-        let dataPoints = []; // Stores all data points received
-        let labelCounter = 0; // Simple counter for labels
-
-        // Connect to the Socket.IO server
-        // If running locally, this should be your Flask app's address
         const socket = io('http://127.0.0.1:5000');
+        let chartDataX = []; // Array for X-axis (counts/indices)
+        let chartDataY = []; // Array for Y-axis (values)
+        let pointCount = 0; // To keep track of the current index
 
-        socket.on('connect', () => {
-            console.log('Connected to WebSocket server');
-        });
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const layout = {
+                title: 'Real-time Values',
+                xaxis: {
+                    title: 'Data Point Index', // X-axis title reflects it's a count
+                    // rangeselector: removed for simplicity if it's just a count, can be added back
+                    // rangeslider: removed for simplicity if it's just a count, can be added back
+                },
+                yaxis: {
+                    title: 'Value',
+                    rangemode: 'tozero'
+                },
+                hovermode: 'closest',
+                margin: { l: 50, r: 50, b: 80, t: 50 },
+                showSendToCloud: false,
+                dragmode: 'zooma',
+            };
 
-        socket.on('disconnect', () => {
-            console.log('Disconnected from WebSocket server');
-        });
-
-        // Event for initial data (when a new client connects)
-        socket.on('initial_data', (msg) => {
-            console.log('Received initial data:', msg.data);
-            dataPoints = msg.data;
-            labelCounter = dataPoints.length; // Set label counter based on initial data
-            updateChart();
-        });
-
-        // Event for new data updates
-        socket.on('new_data', (msg) => {
-            // const recievedTime = new Date().getTime();
-            // console.log('[${recievedTime}] Received new data:', msg.data);
-            console.log('Received new data:', msg.data);
-            // Append new data to our existing dataPoints array
-			try {
-				msg.data.forEach(dp => {
-					dataPoints.push(dp);
-					labelCounter++; // Increment label counter for each new point
-					});
-				updateChart();
-			} catch(error) {
-				console.error('Error: ', error);
-			}
-        });
-
-        function updateChart() {
-            const labels = Array.from({length: dataPoints.length}, (_, i) => i + 1); // Or use timestamps if available
-
-            if (!myChart) {
-                // Initialize chart if it doesn't exist
-                myChart = new Chart(ctx, {
-                    type: 'scatter',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'My Data',
-                            data: dataPoints,
-                            borderColor: 'rgb(75, 192, 192)',
-                            tension: 0.1,
-                            fill: false
-                        }]
-                    },
-                    options: {
-                        animation: false, // Turn off animation for smoother live updates
-                        scales: {
-                            y: {
-                                beginAtZero: true
-                            }
-                        }
+            const data = [{
+                x: chartDataX,
+                y: chartDataY,
+                mode: 'markers',
+                name: 'Real-time Values',
+                marker: { // Optional: Customize marker appearance
+                    color: 'rgb(75, 192, 192)',
+                    size: 8, // Adjust marker size
+                    line: {
+                        color: 'rgb(75, 192, 192)',
+                        width: 1
                     }
+                }
+            }];
+
+            Plotly.newPlot('plotlyChart', data, layout, {
+                responsive: true,
+                displayModeBar: true,
+                // modeBarButtonsToRemove: ['lasso2d', 'select2d', 'toggleSpikelines']
+            });
+
+            // WebSocket event handlers
+            socket.on('connect', () => {
+                console.log('Connected to WebSocket server');
+            });
+
+            socket.on('disconnect', () => {
+                console.log('Disconnected from WebSocket server');
+            });
+
+            // Handle initial historical data
+            socket.on('initial_data', (msg) => {
+                console.log('Received initial data:', msg.data);
+                // Assuming msg.data is an array of raw values: [value1, value2, ...]
+
+                chartDataY = msg.data;
+                chartDataX = Array.from({ length: chartDataY.length }, (_, i) => i); // Generate 0, 1, 2, ...
+                pointCount = chartDataY.length; // Update the global count
+
+                // Update the chart with initial data
+                Plotly.react('plotlyChart', [{ x: chartDataX, y: chartDataY, mode: 'markers' }], layout);
+
+                if (chartDataY.length > 0) {
+                    const lastIndex = chartDataX[chartDataX.length - 1];
+                    const lastValue = chartDataY[chartDataY.length - 1];
+                    document.getElementById('lastDataPoint').textContent = `${lastIndex}:${lastValue.toFixed(2)}`;
+                }
+            });
+
+            // Handle new real-time data
+            socket.on('new_data', (msg) => {
+                console.log('!!!!!!! RECEIVED NEW DATA !!!!!!!', msg.data);
+                // Assuming msg.data is a single raw value: value
+
+                const newValue = msg.data;
+				msg.data.forEach(dp => {
+					chartDataY.push(dp);
+					chartDataX.push(pointCount);
+					pointCount++; // Increment label counter for each new point
                 });
-            } else {
-                // Update existing chart
-                myChart.data.labels = labels;
-                myChart.data.datasets[0].data = dataPoints;
-                myChart.update(); // This efficiently updates the chart
-            }
-        }
+                
+                // Update the "Last Data Point" display
+                document.getElementById('lastDataPoint').textContent = `${chartDataX[chartDataX.length - 1]}:${chartDataY[chartDataY.length - 1].toFixed(2)}`;
+
+                // Efficiently add new data point to the chart
+                // Plotly.extendTraces can add to both X and Y simultaneously
+                Plotly.extendTraces('plotlyChart', { x: [[chartDataX[chartDataX.length - 1]]], y: [[newValue]] }, [0]);
+
+                // Optional: Limit the number of points displayed in memory
+                const maxPointsToKeep = 500;
+                if (chartDataX.length > maxPointsToKeep) {
+                    // This will slice the arrays, but Plotly.extendTraces only appends.
+                    // If you want to strictly keep the chart size, you might need Plotly.react
+                    // with sliced data here, which would reset zoom.
+                    // For typical streaming, Plotly's internal management with extendTraces is usually fine.
+                }
+            });
+
+            // Event listener for the Reset View button
+            document.getElementById('resetZoomBtn').addEventListener('click', () => {
+                Plotly.relayout('plotlyChart', {
+                    'xaxis.autorange': true,
+                    'yaxis.autorange': true
+                });
+            });
+        });
     </script>
 </body>
 </html>
