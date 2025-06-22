@@ -4,7 +4,7 @@
 [![Flask Version](https://img.shields.io/badge/flask-2.x-lightgrey.svg)](https://flask.palletsprojects.com/)
 [![Flask-SocketIO Version](https://img.shields.io/badge/flask--socketio-5.x-orange.svg)](https://flask-socketio.readthedocs.io/)
 [![Plotly.js Version](https://img.shields.io/badge/plotly.js-2.x-brightgreen.svg)](https://plotly.com/javascript/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
 ## 📊 Overview
 
@@ -48,7 +48,7 @@ Follow these steps to get the project up and running on your local machine.
     ```
 
 3.  **Install the required Python packages:**
-    Create a `requirements.txt` file in your project's root directory with the following content:
+    Install the packages listed in the `requirements.txt` file in your project's root directory. It should have the following content:
     ```
     Flask
     Flask-SocketIO
@@ -58,10 +58,9 @@ Follow these steps to get the project up and running on your local machine.
     ```bash
     pip install -r requirements.txt
     ```
-
-### Project Structure
-
-blah
+    I tried this on several systems Ubuntu, Arch Linux, RedHat EL, but it seems to me that
+    there are some problems if you install Flask and Flask-SocketIO from packages. It is
+    therefore strongly recommended that you use a virtual environment.
 
 ## 🛠️ Usage
 
@@ -81,7 +80,7 @@ blah
 
 2.  **Run the Flask server:**
     ```bash
-    python app.py
+    python app.py test_data.log --debug
     ```
     The server will start, typically on `http://127.0.0.1:5000`. You will see logging messages indicating the server's activity and when data points are sent.
 
@@ -115,40 +114,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 * [watchdog](https://python-watchdog.readthedocs.io/)
 * [Plotly.js](https://plotly.com/javascript/)
 * [Socket.IO](https://socket.io/)
-
-
-# logplotter 
-
-logplotter is a tool to plot logfiles. Typically is you are logging some value
-in some other process or if you are training some neural network or other machine
-learning model, it is nice to have plot of the development of the interesting value
-ie. the loss function value metric or whatever you are measuring.
-
-## How it works
-
-This system sets up a inotify signal on the logfile you want to plot. It uses the watchdog
-package to watch over changes in a file. This can be slow if it is a remote system.
-
-It then sets up a Flask application server and sets up a WebSocket connection between the
-server and the client. The client makes a plot using ~~chart.js~~ plotly.
-
-## Install
-
-This is ment as a starting point for your specific task, so the edges are a bit rough!
-I tried this on several systems Ubuntu, Arch Linux, RedHat EL, but it seems to me that
-there are some problems if you install Flask and Flask-SocketIO from packages. It is
-therefore strongly recommended that you use a virtual environment.
-
-```shell
-python -m venv venv
-. venv/bin/activate
-pip install --upgrade pip
-pip install Flask Flask-SocketIO watchdog
-
-# Then start the app server
-python app.py
-```
-
-So, since this is ment as a starting point, the logfile name and the way to parse the
-file is hardcoded into the app.py file you hence have to modify it to suit your need.
-
