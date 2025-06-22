@@ -8,17 +8,23 @@ import threading
 import logging
 import sys
 
-logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
-logging.getLogger('flask_socketio').setLevel(logging.DEBUG)
-logging.getLogger('engineio').setLevel(logging.DEBUG)
-logging.getLogger('socketio').setLevel(logging.DEBUG)
+debug = True if "--debug" in sys.argv else False
+if debug: 
+    print("Adding logging features")
+    logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
+    logging.getLogger('flask_socketio').setLevel(logging.DEBUG)
+    logging.getLogger('engineio').setLevel(logging.DEBUG)
+    logging.getLogger('socketio').setLevel(logging.DEBUG)
+
 app = Flask(__name__)
 
 # IMPORTANT: Replace 'your_secret_key_here' with a strong, random key in production
-app.config['SECRET_KEY'] = 'a_random_secret_key'
+#app.config['SECRET_KEY'] = 'a_random_secret_key'
 socketio = SocketIO(app, cors_allowed_origins="*") # Allow all origins for development, restrict in production
 
-DATA_FILE = './classic-td.log' # Path to your data file on the server
+DATA_FILE = sys.argv[1] 
+#DATA_FILE = './classic-td.log' # Path to your data file on the server
+print("DATA_FILE: ", DATA_FILE)
 
 # A simple list to hold already sent data, useful for initial plot
 # This will be populated by the event handler on startup.
@@ -140,7 +146,7 @@ def start_file_monitoring(socketio_instance, event_handler_instance):
     observer = Observer()
     # Schedule the handler for the DATA_FILE within the current directory
     # Watchdog monitors the directory, but the event handler filters for DATA_FILE
-    observer.schedule(event_handler_instance, path='.', recursive=False)
+    observer.schedule(event_handler_instance, path=os.path.dirname(os.path.abspath(DATA_FILE)), recursive=False)
     observer.start()
     print("Watchdog observer started in background thread.")
     try:
@@ -165,5 +171,6 @@ if __name__ == '__main__':
     thread.start()
 
     # Run the Flask-SocketIO application
-    print(f"[{time.time():.2f}] Starting Flask-SocketIO app with use_reloader=False and DEBUG logging...")
-    socketio.run(app, debug=True, use_reloader=False)
+    print(f"[{time.time():.2f}] Starting Flask-SocketIO app with use_reloader=False", end="")
+    print("{}".format(" and DEBUG logging..." if debug else " ..."))
+    socketio.run(app, debug=debug, use_reloader=False)
