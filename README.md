@@ -1,4 +1,4 @@
-# Realtime Data Stream Plotter
+# Logplotter - a realtime data stream plotter
 
 [![Python Version](https://img.shields.io/badge/python-3.x-blue.svg)](https://www.python.org/)
 [![Flask Version](https://img.shields.io/badge/flask-2.x-lightgrey.svg)](https://flask.palletsprojects.com/)
@@ -37,8 +37,8 @@ Follow these steps to get the project up and running on your local machine.
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/](https://github.com/)[Your-GitHub-Username]/[your-repo-name].git
-    cd [your-repo-name]
+    git clone git@github.com:oysteijo/logplotter.git
+    cd logplotter
     ```
 
 2.  **Create and activate a Python virtual environment (recommended):**
@@ -58,8 +58,8 @@ Follow these steps to get the project up and running on your local machine.
     ```bash
     pip install -r requirements.txt
     ```
-    I tried this on several systems Ubuntu, Arch Linux, RedHat EL, but it seems to me that
-    there are some problems if you install Flask and Flask-SocketIO from packages. It is
+    **Warning:** I tried this on several systems Ubuntu, Arch Linux, RedHat EL, but it seems to me that
+    there are some problems if you install Flask and Flask-SocketIO from system packages (`.rpm`, `.deb`, pacman). It is
     therefore strongly recommended that you use a virtual environment.
 
 ## 🛠️ Usage
