@@ -20,7 +20,7 @@ app = Flask(__name__)
 
 # IMPORTANT: Replace 'your_secret_key_here' with a strong, random key in production
 #app.config['SECRET_KEY'] = 'a_random_secret_key'
-socketio = SocketIO(app, cors_allowed_origins="*") # Allow all origins for development, restrict in production
+socketio = SocketIO(app, host="0.0.0.0", cors_allowed_origins="*") # Allow all origins for development, restrict in production
 
 DATA_FILE = sys.argv[1] 
 #DATA_FILE = './classic-td.log' # Path to your data file on the server
@@ -65,10 +65,11 @@ class DataFileEventHandler(FileSystemEventHandler):
             print(f"Warning: Data file '{DATA_FILE}' not found. Creating it.")
             open(DATA_FILE, 'a').close() # Create the file if it doesn't exist
             self.last_read_position = 0 # File is empty
+        print(initial_data_points)
 
     def on_modified(self, event):
         print("I got an MODIFIED event!")
-        if not event.is_directory and event.src_path == DATA_FILE:
+        if not event.is_directory and os.path.abspath(event.src_path) == os.path.abspath(DATA_FILE):
             # We add a small delay to ensure the file write operation is complete
             # This is a common workaround for inotify events sometimes firing prematurely
             print(f"[{time.time():.2f}] Watchdog fired for: {event.src_path}")
@@ -173,4 +174,4 @@ if __name__ == '__main__':
     # Run the Flask-SocketIO application
     print(f"[{time.time():.2f}] Starting Flask-SocketIO app with use_reloader=False", end="")
     print("{}".format(" and DEBUG logging..." if debug else " ..."))
-    socketio.run(app, debug=debug, use_reloader=False)
+    socketio.run(app, host="0.0.0.0", debug=debug, use_reloader=False)
